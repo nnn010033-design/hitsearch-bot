@@ -502,7 +502,15 @@ async def fio_lookup(full_name: str) -> Dict:
     normalized = full_name.lower().strip()
     if is_hidden("fio", normalized):
         return {"error": "hidden", "message": "Информация по данному запросу не найдена"}
-    response = await api_search(full_name)
+    
+    # Ищем дату рождения в запросе
+    import re
+    date_match = re.search(r'(\d{2}\.\d{2}\.\d{4})', full_name)
+    search_value = full_name.strip()
+    
+    # DeepScan сам обработает запрос с ФИО и датой
+    response = await api_search(search_value)
+    
     return {
         "full_name": full_name,
         "data": parse_api_response(response) if response.get("ok") else {"found": False}
@@ -1233,7 +1241,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             search_type = "email"
         elif re.search(r'\d', query) and len(re.sub(r'[^\d]', '', query)) >= 10:
             search_type = "phone"
-        elif re.match(r'^[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+', query):
+        elif re.match(r'^[А-ЯЁ][а-яё]+\s[А-ЯЁ][а-яё]+(?:\s[А-ЯЁ][а-яё]+)?(?:\s\d{2}\.\d{2}\.\d{4})?$', query):
             search_type = "fio"
         elif query.startswith('@') and re.match(r'^@[a-zA-Z0-9_\-]+$', query):
             search_type = "username"
