@@ -103,6 +103,26 @@ init_db()
 
 
 # ============= ФУНКЦИИ СКРЫТИЯ (УНИВЕРСАЛЬНЫЕ) =============
+def add_shadow_username(username: str, admin_id: int, platform: str) -> bool:
+    """Добавляет username в список скрытых"""
+    normalized = username.lstrip('@').lower()
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        c.execute('INSERT INTO hidden_items (search_type, value, added_by, added_at) VALUES (?, ?, ?, ?)',
+                  (f"{platform}_username", normalized, admin_id, datetime.now().isoformat()))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+def is_username_shadowed(username: str, platform: str) -> bool:
+    """Проверяет, скрыт ли username"""
+    normalized = username.lstrip('@').lower()
+    return is_hidden(f"{platform}_username", normalized)
+            
 def add_hidden_item(search_type: str, value: str, admin_id: int) -> bool:
     """Добавляет запись в список скрытых"""
     conn = sqlite3.connect(DB_PATH)
